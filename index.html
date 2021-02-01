@@ -92,7 +92,7 @@
             })
                 .then(response => response.json())
                 .then(data => {
-                    showGenerationResult(data);
+                    showGenerationResult(data, courseCode);
                 })
                 .catch((error) => {
                     console.error('Error:', error);
@@ -100,24 +100,64 @@
                 });
         }
 
-        function showGenerationResult(result) {
+        function showGenerationResult(result, courseId) {
             var resultHTML = "";
             console.log(result)
             if (result.code == 200 && result.projects.length == 1) {
                 var err = result.projects[0].errors;
                 if (!err || err.length == 0) {
                     // Generated project
-                    var dashboardURL, teamId;
+                    const projectScope = result.projects[0].newScope;
+                    // Get template and prepare
+                    fetch('https://assets.bluejay.governify.io/api/v1/public/renders/tpa/template.json', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            const projectId = projectScope.projectId;
+                            var tpa = JSON.parse(JSON.stringify(data).replace(/1010101010/g, projectId).replace(/2020202020/g, courseId));
+                            tpa.context.infrastructure.render = 'https://ui.bluejay.governify.io/render?model=https://registry.bluejay.governify.io/api/v6/agreements/' + tpa.id + '&view=/renders/tpa/default.html&ctrl=/renders/tpa/default.js';
+
+                            fetch('https://registry.bluejay.governify.io/api/v6/agreements', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify(tpa),
+                            })
+                                .then(response => response.json())
+                                .then(data => {
+                                    var periods = { "periods": [{ "from": "2021-01-18T00:00:00Z", "to": new Date().toISOString() }] };
+                                    console.log("heyy")
+                                    console.log(JSON.stringify(periods))
+                                    console.log("heyy")
+                                    fetch('https://reporter.bluejay.governify.io/api/v4/contracts/tpa-' + projectId + '/createPointsFromPeriods', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                        },
+                                        body: JSON.stringify(periods),
+                                    })
+                                        .then(response => console.log("computing"))
+                                        .catch((error) => {
+                                            console.error('Error:', error);
+                                        });
+                                })
+                                .catch((error) => {
+                                    console.error('Error:', error);
+                                });
+                        })
+                        .catch((error) => {
+                            console.error('Error:', error);
+                        });
+
+                    var dashboardURL = "http://dashboard.bluejay.governify.io/dashboard/script/dashboardLoader.js?dashboardURL=https://reporter.bluejay.governify.io/api/v4/dashboards/tpa-" + projectScope.projectId + "/main";
                     resultHTML = "<br/><strong>Congrats! Your project dashboard has been created! </strong><br/>";
                     resultHTML += '<span>The data is being computed so it may take a minute for the points to appear. Click <a href="' + dashboardURL + '" target="_blank">here</a> to access to it (user: governify-admin, password: governify-project)</span><br/>';
-                    resultHTML += "<br/><span>You can also copy the following markdown to your repo's README.md for ease of access:</span><br/>"
-                    resultHTML += "<br/><span>You can also copy the following markdown to your repo's README.md for ease of access:</span><br/><i>[![Conventional Commits](https://img.shields.io/badge/bluejay-dashboard_" + teamId + "-blue.svg)](" + dashboardURL + ")</i>"
-                    /* 
-                    <strong>Congrats! Your project dashboard has been created! </strong><br/>
-                    <span>The data is being computed so it may take a while for the points to appear. Click <a href="" target="_blank">here</a> to access to it (user: governify-admin, password: governify-project)</span><br/>
-                    <br/><span>You can also copy the following markdown to your repo's README.md for ease of access:</span><br/>
-                    <i>[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)</i>
-                    */
+                    resultHTML += "<br/><span>You can also copy the following markdown to your repo's README.md for ease of access:</span><br/><i>[![Conventional Commits](https://img.shields.io/badge/bluejay-dashboard_" + projectScope.teamId + "-blue.svg)](" + dashboardURL + ")</i>"
                 } else {
                     resultHTML = "<br/><strong>Ups!! There is a problem! 😔</strong><br/>";
                     resultHTML += "<br/>Error(s) found:<ul>";
@@ -172,11 +212,12 @@
         <hr />
         <h4 style="width: 100%; text-align: left; padding: 20px 0 10px 0;">Welcome to the join-in page!</h4>
         <div style="margin:2%">
-            <h5 style="width: 100%; text-align: left; padding-bottom: 10px; font-size: 1.1rem;"><strong style="color: rgb(41, 126, 255);">1.</strong> Please, enter you Repository URL
+            <h5 style="width: 100%; text-align: left; padding-bottom: 10px; font-size: 1.1rem;"><strong
+                    style="color: rgb(41, 126, 255);">1.</strong> Please, enter you Repository URL
                 containing the <span style="color: rgb(41, 126, 255);">info.yml</span> file to check it's validity.</h5>
             <div class="form-inline">
-                <input id="repoURL" class="form-control" style="width:89%; margin-right: 1%;" placeholder="Github repo URL"
-                    onkeyup="sendclick(event, 'btnCheck')">
+                <input id="repoURL" class="form-control" style="width:89%; margin-right: 1%;"
+                    placeholder="Github repo URL" onkeyup="sendclick(event, 'btnCheck')">
                 <button id="btnCheck" class="btn btn-outline-info" style="width: 10%;" type="submit" onsubmit="check()"
                     onclick="check()">Check</button>
             </div>
@@ -185,11 +226,12 @@
         </div>
         <div style="margin:2%; display: none;" id="generationDiv">
             <hr />
-            <h5 style="width: 100%; text-align: left; padding-bottom: 10px; font-size: 1.1rem;"><strong style="color: rgb(41, 126, 255);">2.</strong> To register your project just
+            <h5 style="width: 100%; text-align: left; padding-bottom: 10px; font-size: 1.1rem;"><strong
+                    style="color: rgb(41, 126, 255);">2.</strong> To register your project just
                 enter the <span style="color: rgb(41, 126, 255);">course code</span> given by your instructor!</h5>
             <div class="form-inline">
-                <input id="courseCode" class="form-control" style="width:89%; margin-right: 1%;" placeholder="Bluejay's invitation code"
-                    onkeyup="sendclick(event, 'btnGenerate')">
+                <input id="courseCode" class="form-control" style="width:89%; margin-right: 1%;"
+                    placeholder="Bluejay's invitation code" onkeyup="sendclick(event, 'btnGenerate')">
                 <button id="btnGenerate" class="btn btn-outline-success" style="width: 10%;" type="submit"
                     onsubmit="generate()" onclick="generate()">Register</button>
             </div>
