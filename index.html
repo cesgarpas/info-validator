@@ -96,15 +96,16 @@
                 })
                 .catch((error) => {
                     console.error('Error:', error);
-                    showResult(error);
+                    showGenerationResult(error);
                 });
         }
 
         function showGenerationResult(result) {
             var resultHTML = "";
+            console.log(result)
             if (result.code == 200 && result.projects.length == 1) {
                 var err = result.projects[0].errors;
-                if ((err.length == 0)) {
+                if (!err || err.length == 0) {
                     // Generated project
                     resultHTML = "<br/><strong>Yay!! Your project has been added to the system and it's ready to be audited!!! 😊</strong><br/>";
                 } else {
@@ -145,7 +146,7 @@
         window.addEventListener("load", function () {
             console.log("Document loaded!");
             document.getElementById("repoURL").focus();
-            document.getElementById("result").innerHTML = "e.g. https://github.com/cesgarpas/eagle-testing"
+            document.getElementById("result").innerHTML = "<strong>e.g.</strong> https://github.com/cesgarpas/eagle-testing"
         });
     </script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
@@ -154,15 +155,15 @@
 </head>
 
 <body style="font-family: 'Roboto Mono', monospace; background-color: rgb(143, 188, 255);">
-    <div style="height: 91vh; margin: 3%; padding: 2%; background-color: white; border: 1px solid rgb(151, 151, 151);">
+    <div style="height: 91vh; margin: 3%; padding: 3%; background-color: white; border: 1px solid rgb(151, 151, 151);">
         <h1 style="width: 100%; text-align: center; padding-bottom: 20px; color: rgb(41, 126, 255);">Bluejay</h1>
         <hr />
         <h3 style="width: 100%; text-align: left; padding: 20px 0;">Welcome to the join-in page!</h3>
         <div style="margin:2%">
-            <h5 style="width: 100%; text-align: left; padding-bottom: 10px;">1. Please, enter you Repository URL
+            <h5 style="width: 100%; text-align: left; padding-bottom: 10px;"><strong style="color: rgb(41, 126, 255);">1.</strong> Please, enter you Repository URL
                 containing the <span style="color: rgb(41, 126, 255);">info.yml</span> file to check it's validity.</h5>
             <div class="form-inline">
-                <input id="repoURL" class="form-control" style="width:90%" placeholder="Github repo URL"
+                <input id="repoURL" class="form-control" style="width:89%; margin-right: 1%;" placeholder="Github repo URL"
                     onkeyup="sendclick(event, 'btnCheck')">
                 <button id="btnCheck" class="btn btn-outline-info" style="width: 10%;" type="submit" onsubmit="check()"
                     onclick="check()">Check</button>
@@ -170,12 +171,12 @@
             <div id="result" style="padding: 1% 5%;">
             </div>
         </div>
-        <div style="margin:4% 2%; display: none;" id="generationDiv">
+        <div style="margin:2%; display: none;" id="generationDiv">
             <hr />
-            <h5 style="width: 100%; text-align: left; padding-bottom: 10px;">2. To start auditing your project just
+            <h5 style="width: 100%; text-align: left; padding-bottom: 10px;"><strong style="color: rgb(41, 126, 255);">2.</strong> To start auditing your project just
                 enter the <span style="color: rgb(41, 126, 255);">course code</span> given by your instructor!</h5>
             <div class="form-inline">
-                <input id="courseCode" class="form-control" style="width:90%" placeholder="Bluejay's invitation code"
+                <input id="courseCode" class="form-control" style="width:89%; margin-right: 1%;" placeholder="Bluejay's invitation code"
                     onkeyup="sendclick(event, 'btnGenerate')">
                 <button id="btnGenerate" class="btn btn-outline-success" style="width: 10%;" type="submit"
                     onsubmit="generate()" onclick="generate()">Generate</button>
